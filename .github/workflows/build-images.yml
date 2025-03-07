@@ -19,31 +19,60 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      # 1. 检出代码
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-
+      # 2. 设置 QEMU（支持多架构，可选）
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
-      - name: Build and push Jar
+      # 3. 设置 Docker Buildx
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      # 4. 构建 Docker 镜像
+      - name: Build x86_64 Image
         uses: docker/build-push-action@v6
         with:
           context: .
           file: ./Dockerfile
           platforms: linux/amd64
-          push: true
-          tags: |
-            ${{ secrets.DOCKER_USERNAME }}/${{ github.event.repository.name }}:v1
+          load: true
+          tags: gzypbh-ai:amd64
+          
+      # 5. 构建 `arm64` 版本
+      - name: Build ARM64 Image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/arm64
+          load: true
+          tags: gzypbh-ai:arm64
 
-      - name: Log out from Docker Hub
-        run: docker logout
+      # 6. 导出 `x86_64` 镜像为 tar 文件
+      - name: Save x86_64 Docker Image to Tar
+        run: |
+          docker save -o gzypbh-ai-amd64.tar gzypbh-ai:amd64
+          ls -lh gzypbh-ai-amd64.tar
+
+      # 7. 导出 `arm64` 镜像为 tar 文件
+      - name: Save ARM64 Docker Image to Tar
+        run: |
+          docker save -o gzypbh-ai-arm64.tar gzypbh-ai:arm64
+          ls -lh gzypbh-ai-arm64.tar
+
+      # 8. 上传 `x86_64` 镜像 tar 文件到 GitHub Artifacts
+      - name: Upload x86_64 Docker Image Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-image-amd64
+          path: gzypbh-ai-amd64.tar
+
+      # 9. 上传 `arm64` 镜像 tar 文件到 GitHub Artifacts
+      - name: Upload ARM64 Docker Image Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-image-arm64
+          path: gzypbh-ai-arm64.tar
