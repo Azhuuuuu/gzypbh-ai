@@ -1,4 +1,4 @@
-FROM dquintela/openjdk-8-jdk-alpine:latest
+FROM adoptopenjdk/openjdk8:alpine-jre
 RUN mkdir /data
 WORKDIR /data
 

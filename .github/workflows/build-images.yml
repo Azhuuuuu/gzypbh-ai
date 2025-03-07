@@ -46,7 +46,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: ./Dockerfile
+          file: ./Dockerfile-arm64
           platforms: linux/arm64
           load: true
           tags: gzypbh-ai:arm64
